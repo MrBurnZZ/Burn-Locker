@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+  <title>Simple Vault</title>
+  <meta name="theme-color" content="#2f5fd6" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" href="icons/icon-192.png" />
+  <link rel="apple-touch-icon" href="icons/icon-192.png" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="app">
+
+    <!-- First-time setup: no vault exists yet on this device -->
+    <section id="view-create" class="view">
+      <h1>Create your vault</h1>
+      <p class="hint">
+        Choose a master password. It's the only key to everything you save
+        here — it's never stored anywhere, so if you forget it, your vault
+        can't be recovered.
+      </p>
+      <form id="form-create">
+        <label>Master password
+          <input type="password" id="create-password" minlength="8" required autocomplete="new-password" />
+        </label>
+        <label>Confirm master password
+          <input type="password" id="create-password-confirm" minlength="8" required autocomplete="new-password" />
+        </label>
+        <p class="error" id="create-error"></p>
+        <button type="submit" class="primary full-width">Create vault</button>
+      </form>
+    </section>
+
+    <!-- Vault exists but is locked -->
+    <section id="view-unlock" class="view">
+      <h1>Simple Vault</h1>
+      <form id="form-unlock">
+        <label>Master password
+          <input type="password" id="unlock-password" required autocomplete="current-password" autofocus />
+        </label>
+        <p class="error" id="unlock-error"></p>
+        <button type="submit" class="primary full-width">Unlock</button>
+      </form>
+    </section>
+
+    <!-- Unlocked: list of saved entries -->
+    <section id="view-vault" class="view">
+      <header class="vault-header">
+        <input type="search" id="search-box" placeholder="Search..." />
+        <button id="btn-lock" title="Lock vault">Lock</button>
+      </header>
+      <ul id="entry-list"></ul>
+      <p id="empty-state" class="hint">No saved logins yet.</p>
+      <button id="btn-add" class="primary full-width">+ Add login</button>
+    </section>
+
+    <!-- Add / edit a single entry -->
+    <section id="view-entry-form" class="view">
+      <h1 id="entry-form-title">Add login</h1>
+      <form id="form-entry">
+        <input type="hidden" id="entry-id" />
+        <label>Title
+          <input type="text" id="entry-title" required placeholder="e.g. Gmail" />
+        </label>
+        <label>Username / email
+          <input type="text" id="entry-username" autocomplete="off" />
+        </label>
+        <label>Password
+          <div class="password-row">
+            <input type="password" id="entry-password" autocomplete="off" />
+            <button type="button" id="btn-toggle-password" title="Show/hide">👁</button>
+            <button type="button" id="btn-generate" title="Generate a strong password">Generate</button>
+          </div>
+        </label>
+        <label>Website (optional)
+          <input type="text" id="entry-url" placeholder="example.com" />
+        </label>
+        <label>Notes (optional)
+          <textarea id="entry-notes" rows="2"></textarea>
+        </label>
+        <div class="form-actions">
+          <button type="button" id="btn-cancel-entry">Cancel</button>
+          <button type="button" id="btn-delete-entry" class="danger">Delete</button>
+          <button type="submit" class="primary">Save</button>
+        </div>
+      </form>
+    </section>
+
+  </div>
+
+  <div id="toast" class="toast"></div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>
