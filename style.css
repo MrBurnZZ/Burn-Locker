@@ -133,6 +133,24 @@ button.danger {
 }
 .form-actions .primary { margin-left: auto; }
 
+.transfer-row {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  margin-top: 14px;
+}
+
+.link-btn {
+  border: none;
+  background: none;
+  color: var(--primary);
+  font-size: 13px;
+  padding: 6px;
+  cursor: pointer;
+  text-decoration: underline;
+}
+.link-btn:active { color: var(--primary-dark); }
+
 .toast {
   position: fixed;
   bottom: 24px;

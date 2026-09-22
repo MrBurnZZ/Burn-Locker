@@ -141,6 +141,78 @@ export class Vault {
   }
 
   /**
+   * Package the current entries into an encrypted, portable file — this is
+   * how entries move between the extension and the mobile web app, since
+   * v1 has no live sync between them. Re-verifies the master password
+   * against the actual stored vault first (rather than trusting whatever
+   * was typed), so a typo here fails loudly now instead of producing a
+   * file that silently can't be decrypted later. The export is protected
+   * with its own fresh salt — never the live vault's — so it's a
+   * self-contained encrypted artifact in its own right, not merely a copy
+   * of vault internals.
+   */
+  async exportEntries(masterPassword) {
+    const verifyKey = await this._deriveKeyFromStoredSalt(masterPassword);
+    const blob = await this.storage.get(STORAGE_KEY);
+    try {
+      await decryptJSON(verifyKey, blob.iv, blob.ciphertext);
+    } catch {
+      throw new WrongPasswordError();
+    }
+
+    const exportSalt = generateSalt();
+    const exportKey = await deriveKey(masterPassword, exportSalt);
+    const { iv, ciphertext } = await encryptJSON(exportKey, { entries: this.data.entries });
+    return {
+      format: 'simple-vault-export',
+      version: 1,
+      salt: bytesToBase64(exportSalt),
+      iv,
+      ciphertext,
+      exportedAt: Date.now(),
+    };
+  }
+
+  /**
+   * Decrypt a file produced by exportEntries() and add its entries to the
+   * currently unlocked vault. Deliberately simple for v1: every incoming
+   * entry is added as new (with a fresh id), never matched up against or
+   * merged with existing entries — importing the same file twice will
+   * create duplicates rather than silently guessing which entries are
+   * "the same." Returns how many entries were added.
+   */
+  async importEntries(exportedFile, password) {
+    this._assertUnlocked();
+    if (!exportedFile || exportedFile.format !== 'simple-vault-export') {
+      throw new Error('This file is not a Simple Vault export.');
+    }
+
+    const salt = base64ToBytes(exportedFile.salt);
+    const key = await deriveKey(password, salt);
+    let decrypted;
+    try {
+      decrypted = await decryptJSON(key, exportedFile.iv, exportedFile.ciphertext);
+    } catch {
+      throw new WrongPasswordError();
+    }
+
+    const incoming = Array.isArray(decrypted.entries) ? decrypted.entries : [];
+    for (const entry of incoming) {
+      this.data.entries.push({
+        id: crypto.randomUUID(),
+        title: entry.title || '(untitled)',
+        username: entry.username || '',
+        password: entry.password || '',
+        url: entry.url || '',
+        notes: entry.notes || '',
+        updatedAt: Date.now(),
+      });
+    }
+    await this._persist();
+    return incoming.length;
+  }
+
+  /**
    * Re-encrypt the current in-memory data and write it to storage.
    * `salt` only needs to be passed on first creation; after that we reuse
    * the salt already on disk (it isn't secret, it just needs to stay

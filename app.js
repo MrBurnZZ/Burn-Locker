@@ -99,7 +99,7 @@ const vault = new Vault(storage);
 let editingEntryId = null;
 
 // --- view switching ---
-const views = ['view-create', 'view-unlock', 'view-vault', 'view-entry-form'];
+const views = ['view-create', 'view-unlock', 'view-vault', 'view-entry-form', 'view-export', 'view-import'];
 function showView(id) {
   for (const v of views) {
     document.getElementById(v).classList.toggle('active', v === id);
@@ -323,6 +323,95 @@ document.getElementById('btn-delete-entry').addEventListener('click', async () =
   renderEntryList();
   showView('view-vault');
 });
+
+// --- export ---
+document.getElementById('btn-open-export').addEventListener('click', () => {
+  document.getElementById('export-password').value = '';
+  document.getElementById('export-error').textContent = '';
+  showView('view-export');
+});
+
+document.getElementById('btn-cancel-export').addEventListener('click', () => showView('view-vault'));
+
+document.getElementById('form-export').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const pw = document.getElementById('export-password').value;
+  const errorEl = document.getElementById('export-error');
+  try {
+    const exported = await vault.exportEntries(pw);
+    downloadJSON(`simple-vault-export-${todayStamp()}.json`, exported);
+    resetIdleTimer();
+    showToast('Export downloaded');
+    showView('view-vault');
+  } catch (err) {
+    if (err instanceof WrongPasswordError) {
+      errorEl.textContent = 'Incorrect master password.';
+    } else {
+      errorEl.textContent = 'Something went wrong. Please try again.';
+      console.error(err);
+    }
+  }
+});
+
+// --- import ---
+document.getElementById('btn-open-import').addEventListener('click', () => {
+  document.getElementById('import-file').value = '';
+  document.getElementById('import-password').value = '';
+  document.getElementById('import-error').textContent = '';
+  showView('view-import');
+});
+
+document.getElementById('btn-cancel-import').addEventListener('click', () => {
+  renderEntryList();
+  showView('view-vault');
+});
+
+document.getElementById('form-import').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const fileInput = document.getElementById('import-file');
+  const pw = document.getElementById('import-password').value;
+  const errorEl = document.getElementById('import-error');
+  const file = fileInput.files[0];
+
+  if (!file) {
+    errorEl.textContent = 'Choose an export file first.';
+    return;
+  }
+
+  try {
+    const exported = JSON.parse(await file.text());
+    const count = await vault.importEntries(exported, pw);
+    resetIdleTimer();
+    renderEntryList();
+    showToast(`Imported ${count} ${count === 1 ? 'entry' : 'entries'}`);
+    showView('view-vault');
+  } catch (err) {
+    if (err instanceof WrongPasswordError) {
+      errorEl.textContent = 'Incorrect password for that export file.';
+    } else if (err instanceof SyntaxError) {
+      errorEl.textContent = "That file doesn't look like a valid export.";
+    } else {
+      errorEl.textContent = err.message || 'Something went wrong. Please try again.';
+      console.error(err);
+    }
+  }
+});
+
+function downloadJSON(filename, dataObj) {
+  const blob = new Blob([JSON.stringify(dataObj, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function todayStamp() {
+  return new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+}
 
 // --- service worker registration (offline support + installability) ---
 if ('serviceWorker' in navigator) {

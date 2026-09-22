@@ -57,6 +57,53 @@
       <ul id="entry-list"></ul>
       <p id="empty-state" class="hint">No saved logins yet.</p>
       <button id="btn-add" class="primary full-width">+ Add login</button>
+      <div class="transfer-row">
+        <button type="button" id="btn-open-export" class="link-btn">Export…</button>
+        <button type="button" id="btn-open-import" class="link-btn">Import…</button>
+      </div>
+    </section>
+
+    <!-- Export entries to an encrypted file, to move them to another device -->
+    <section id="view-export" class="view">
+      <h1>Export entries</h1>
+      <p class="hint">
+        Creates a file with all your saved logins, encrypted with your master
+        password. Safe to email to yourself, put in a cloud drive, or copy to
+        another device — it can't be read without that password.
+      </p>
+      <form id="form-export">
+        <label>Master password
+          <input type="password" id="export-password" required autocomplete="current-password" />
+        </label>
+        <p class="error" id="export-error"></p>
+        <div class="form-actions">
+          <button type="button" id="btn-cancel-export">Cancel</button>
+          <button type="submit" class="primary">Export</button>
+        </div>
+      </form>
+    </section>
+
+    <!-- Import entries from a previously exported encrypted file -->
+    <section id="view-import" class="view">
+      <h1>Import entries</h1>
+      <p class="hint">
+        Adds the entries from an exported file into this vault. This doesn't
+        check for duplicates — importing the same file twice will add
+        everything twice.
+      </p>
+      <form id="form-import">
+        <label>Export file
+          <input type="file" id="import-file" accept=".json,application/json" required />
+        </label>
+        <label>Password used to create that export
+          <input type="password" id="import-password" required autocomplete="off" />
+        </label>
+        <p class="error" id="import-error"></p>
+        <div class="form-actions">
+          <button type="button" id="btn-cancel-import">Cancel</button>
+          <button type="submit" class="primary">Import</button>
+        </div>
+      </form>
     </section>
 
     <!-- Add / edit a single entry -->
