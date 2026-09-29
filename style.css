@@ -1,11 +1,39 @@
 * { box-sizing: border-box; }
 
+/*
+ * Colors live as custom properties so dark mode (toggled in Settings) is
+ * just a second set of values under [data-theme="dark"], rather than a
+ * parallel stylesheet — every rule below references a variable instead of
+ * a literal color, so both themes stay in sync automatically.
+ */
 :root {
+  --bg: #fafafa;
+  --surface: #ffffff; /* card / input / button backgrounds */
+  --text: #1a1a1a;
+  --text-muted: #666;
+  --border: #ccc;
+  --hover-accent: #eef1fb;
   --primary: #2f5fd6;
   --primary-dark: #274ec2;
   --danger: #b3261e;
-  --border: #ccc;
-  --bg: #fafafa;
+  --danger-border: #e0b4b1;
+  --toast-bg: #1a1a1a;
+  --toast-text: #ffffff;
+}
+
+:root[data-theme="dark"] {
+  --bg: #121212;
+  --surface: #1e1e1e;
+  --text: #f2f2f2;
+  --text-muted: #aaaaaa;
+  --border: #444444;
+  --hover-accent: #22304a;
+  --primary: #7c98e8;
+  --primary-dark: #5c7ad0;
+  --danger: #ff7b70;
+  --danger-border: #6b2e2a;
+  --toast-bg: #f2f2f2;
+  --toast-text: #1a1a1a;
 }
 
 html, body {
@@ -13,7 +41,7 @@ html, body {
   height: 100%;
   background: var(--bg);
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  color: #1a1a1a;
+  color: var(--text);
 }
 
 .app {
@@ -28,11 +56,15 @@ h1 {
   margin: 4px 0 14px;
 }
 
+h2 {
+  color: var(--text);
+}
+
 .view { display: none; }
 .view.active { display: block; }
 
 .hint {
-  color: #666;
+  color: var(--text-muted);
   font-size: 13px;
   line-height: 1.5;
 }
@@ -44,7 +76,7 @@ label {
   flex-direction: column;
   gap: 5px;
   font-size: 13px;
-  color: #333;
+  color: var(--text);
 }
 
 input, textarea {
@@ -53,6 +85,8 @@ input, textarea {
   border: 1px solid var(--border);
   border-radius: 8px;
   font-family: inherit;
+  background: var(--surface);
+  color: var(--text);
 }
 
 textarea { resize: vertical; }
@@ -62,7 +96,8 @@ button {
   padding: 11px 14px;
   border: 1px solid var(--border);
   border-radius: 8px;
-  background: white;
+  background: var(--surface);
+  color: var(--text);
   cursor: pointer;
 }
 
@@ -77,7 +112,7 @@ button.primary:active { background: var(--primary-dark); }
 
 button.danger {
   color: var(--danger);
-  border-color: #e0b4b1;
+  border-color: var(--danger-border);
 }
 
 .error {
@@ -111,13 +146,13 @@ button.danger {
   gap: 10px;
   padding: 12px 10px;
   border-radius: 10px;
-  background: white;
-  border: 1px solid #eee;
+  background: var(--surface);
+  border: 1px solid var(--border);
 }
 
 .entry-info { display: flex; flex-direction: column; overflow: hidden; min-width: 0; }
 .entry-info .title { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.entry-info .username { color: #666; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.entry-info .username { color: var(--text-muted); font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 .entry-actions { display: flex; gap: 6px; flex-shrink: 0; }
 .entry-actions button { padding: 8px 10px; font-size: 13px; }
@@ -142,7 +177,7 @@ button.danger {
 
 .settings-btn {
   margin-top: 14px;
-  color: #555;
+  color: var(--text-muted);
 }
 
 .link-btn {
@@ -159,7 +194,7 @@ button.danger {
 .security-section {
   margin-bottom: 20px;
   padding-bottom: 16px;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid var(--border);
 }
 .security-section:last-of-type { border-bottom: none; }
 .security-section h2 {
@@ -173,13 +208,60 @@ button.danger {
   margin-right: 10px;
 }
 
+/* Dark mode toggle — a checkbox visually styled as an on/off switch */
+.switch-row {
+  display: flex;
+  flex-direction: row; /* overrides the global `label { flex-direction: column }` above */
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--text);
+  margin-top: 8px;
+}
+
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 42px;
+  height: 24px;
+  flex-shrink: 0;
+}
+.switch input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+.switch-track {
+  position: absolute;
+  inset: 0;
+  background: var(--border);
+  border-radius: 24px;
+  transition: background 0.15s;
+}
+.switch-track::before {
+  content: "";
+  position: absolute;
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  top: 3px;
+  background: white;
+  border-radius: 50%;
+  transition: transform 0.15s;
+}
+.switch input:checked + .switch-track { background: var(--primary); }
+.switch input:checked + .switch-track::before { transform: translateX(18px); }
+.switch input:focus-visible + .switch-track { outline: 2px solid var(--primary); outline-offset: 2px; }
+
 .toast {
   position: fixed;
   bottom: 24px;
   left: 50%;
   transform: translateX(-50%) translateY(20px);
-  background: #1a1a1a;
-  color: white;
+  background: var(--toast-bg);
+  color: var(--toast-text);
   padding: 10px 18px;
   border-radius: 8px;
   font-size: 14px;

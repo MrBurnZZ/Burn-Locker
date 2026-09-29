@@ -107,6 +107,45 @@ function clearIdleTimer() {
 const vault = new Vault(storage);
 let editingEntryId = null;
 
+// --- theme (dark mode) ---
+// Stored under its own localStorage key, separate from the vault
+// (IndexedDB), on purpose: the burn/duress wipe is deliberately scoped to
+// vault data only (see Vault.wipe() in core/vault.js), and forgetting
+// your saved logins should never also reset how the app looks.
+// localStorage is synchronous, so this can run immediately, before
+// anything else — there's no flash of the wrong theme while it loads.
+const THEME_STORAGE_KEY = 'simpleVaultTheme'; // 'light' | 'dark'
+
+function applyTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme);
+  const toggle = document.getElementById('dark-mode-toggle');
+  if (toggle) toggle.checked = theme === 'dark';
+}
+
+function loadTheme() {
+  let stored = null;
+  try {
+    stored = localStorage.getItem(THEME_STORAGE_KEY);
+  } catch {
+    // Falls through to the system-preference default below.
+  }
+  // No explicit choice saved yet? Default to whatever the OS/browser is
+  // already set to, rather than always starting in light mode.
+  const theme = stored || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+  applyTheme(theme);
+}
+loadTheme(); // run immediately — before init() — so there's no flash of the wrong theme
+
+document.getElementById('dark-mode-toggle').addEventListener('change', (e) => {
+  const theme = e.target.checked ? 'dark' : 'light';
+  applyTheme(theme);
+  try {
+    localStorage.setItem(THEME_STORAGE_KEY, theme);
+  } catch (err) {
+    console.error('Could not save theme preference', err);
+  }
+});
+
 // --- view switching ---
 const views = [
   'view-create',
@@ -131,6 +170,20 @@ function showToast(message) {
   toast.textContent = message;
   toast.classList.add('show');
   setTimeout(() => toast.classList.remove('show'), 1800);
+}
+
+/**
+ * Clears the "create your vault" form. Needed before showing that screen
+ * after a wipe (burn button or duress password) — this page's DOM stays
+ * alive the whole time the tab is open, so without this, whatever was
+ * last typed into these fields (e.g. when the vault was originally
+ * created) would still be sitting there, visible, on the screen a wipe
+ * lands on.
+ */
+function resetCreateForm() {
+  document.getElementById('create-password').value = '';
+  document.getElementById('create-password-confirm').value = '';
+  document.getElementById('create-error').textContent = '';
 }
 
 // --- startup ---
@@ -220,6 +273,7 @@ document.getElementById('form-unlock').addEventListener('submit', async (e) => {
       clearSessionArtifacts();
       document.getElementById('unlock-password').value = '';
       errorEl.textContent = '';
+      resetCreateForm();
       showView('view-create');
       return;
     }
@@ -513,6 +567,7 @@ document.getElementById('form-burn-confirm').addEventListener('submit', async (e
     await vault.wipe();
     clearSessionArtifacts();
     document.getElementById('burn-password').value = '';
+    resetCreateForm();
     showView('view-create'); // same screen a brand new install shows
   } catch (err) {
     errorEl.textContent = 'Something went wrong. Please try again.';
