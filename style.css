@@ -140,6 +140,11 @@ button.danger {
   margin-top: 14px;
 }
 
+.settings-btn {
+  margin-top: 14px;
+  color: #555;
+}
+
 .link-btn {
   border: none;
   background: none;
