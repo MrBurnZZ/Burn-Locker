@@ -17,7 +17,14 @@
 //   - Uses only the browser/Node built-in Web Crypto API (`crypto.subtle`).
 //     No hand-rolled crypto, no third-party crypto library to trust.
 
-const PBKDF2_ITERATIONS = 310000; // OWASP-recommended floor for PBKDF2-SHA256 as of 2023+
+// OWASP's current recommended floor for PBKDF2-SHA256 (raised from 310,000
+// as compute gets cheaper — see cheatsheetseries.owasp.org/cheatsheets/
+// Password_Storage_Cheat_Sheet.html). This is a MOVING target by design:
+// core/vault.js stores whichever iteration count was actually used to
+// protect a given vault, so this constant can be raised again later
+// without breaking anyone already using the app — see the migration logic
+// in vault.js's unlock().
+export const DEFAULT_PBKDF2_ITERATIONS = 600000;
 const KEY_LENGTH_BITS = 256; // AES-256
 const SALT_LENGTH_BYTES = 16;
 const IV_LENGTH_BYTES = 12; // recommended IV size for AES-GCM
@@ -51,18 +58,24 @@ export function generateSalt() {
  * By default the resulting key is non-extractable — the raw key bytes can
  * never be read back out, only used to encrypt/decrypt. Pass
  * `{ extractable: true }` only when the raw bytes genuinely need to be
- * exported (see exportKeyRaw below) — right now that's just the "stay
- * unlocked for this browser session" feature, which needs to stash the
- * key somewhere it can be picked back up from.
+ * exported (see exportKeyRaw below) — right now that's the "stay unlocked
+ * for this browser session" feature and the duress-password verifier (see
+ * vault.js), both of which need to work with the raw bytes directly.
+ *
+ * `iterations` defaults to the current DEFAULT_PBKDF2_ITERATIONS, but a
+ * caller can pass a specific value — vault.js does this to keep deriving
+ * an EXISTING vault's key with whatever iteration count it was actually
+ * created with, so raising the default here never breaks a vault created
+ * under an older, lower count.
  */
-export async function deriveKey(masterPassword, salt, { extractable = false } = {}) {
+export async function deriveKey(masterPassword, salt, { iterations = DEFAULT_PBKDF2_ITERATIONS, extractable = false } = {}) {
   const passwordBytes = new TextEncoder().encode(masterPassword);
   const baseKey = await subtle.importKey('raw', passwordBytes, 'PBKDF2', false, ['deriveKey']);
   return subtle.deriveKey(
     {
       name: 'PBKDF2',
       salt,
-      iterations: PBKDF2_ITERATIONS,
+      iterations,
       hash: 'SHA-256',
     },
     baseKey,
@@ -94,6 +107,24 @@ export async function exportKeyRaw(key) {
 export async function importKeyRaw(rawBase64, { extractable = false } = {}) {
   const raw = fromBase64(rawBase64);
   return subtle.importKey('raw', raw, 'AES-GCM', extractable, ['encrypt', 'decrypt']);
+}
+
+/**
+ * SHA-256 hash of a raw exported key's bytes, base64-encoded. This exists
+ * for exactly one purpose: letting vault.js recognize "was the duress
+ * password just typed at the unlock screen" (see setDuressPassword /
+ * isDuressPassword there). It is NOT used anywhere in the main vault
+ * unlock path, which stays "did decryption succeed?" per the design note
+ * at the top of this file — the duress password has no ciphertext of its
+ * own to test a decrypt against, so it needs some other stored comparison
+ * value, the same way a conventional password hash works. That's a
+ * narrower guarantee than the rest of this file, which is why it's kept to
+ * this one clearly-labeled function rather than baked into deriveKey.
+ */
+export async function hashRawKey(rawBase64) {
+  const bytes = fromBase64(rawBase64);
+  const digest = await subtle.digest('SHA-256', bytes);
+  return toBase64(new Uint8Array(digest));
 }
 
 /**

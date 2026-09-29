@@ -50,6 +50,15 @@ const storage = {
       tx.onerror = () => reject(tx.error);
     });
   },
+  async remove(key) {
+    const db = await openDB();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(STORE_NAME, 'readwrite');
+      tx.objectStore(STORE_NAME).delete(key);
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+    });
+  },
 };
 
 // --- "stay unlocked for this browser session" via sessionStorage ---
@@ -99,7 +108,18 @@ const vault = new Vault(storage);
 let editingEntryId = null;
 
 // --- view switching ---
-const views = ['view-create', 'view-unlock', 'view-vault', 'view-entry-form', 'view-export', 'view-import'];
+const views = [
+  'view-create',
+  'view-unlock',
+  'view-vault',
+  'view-entry-form',
+  'view-export',
+  'view-import',
+  'view-security',
+  'view-burn-confirm',
+  'view-duress-setup',
+  'view-duress-remove',
+];
 function showView(id) {
   for (const v of views) {
     document.getElementById(v).classList.toggle('active', v === id);
@@ -186,6 +206,29 @@ document.getElementById('form-unlock').addEventListener('submit', async (e) => {
   e.preventDefault();
   const pw = document.getElementById('unlock-password').value;
   const errorEl = document.getElementById('unlock-error');
+
+  // Check the duress password BEFORE attempting a normal unlock. This has
+  // to run first and separately — the duress password was never used to
+  // encrypt the vault, so vault.unlock(pw) would just fail on it like any
+  // other wrong password, and by design there's no error message or other
+  // visible difference here: a match wipes the vault and quietly falls
+  // through to "no vault exists yet," the same screen a brand new install
+  // would show.
+  try {
+    if (await vault.isDuressPassword(pw)) {
+      await vault.wipe();
+      clearSessionArtifacts();
+      document.getElementById('unlock-password').value = '';
+      errorEl.textContent = '';
+      showView('view-create');
+      return;
+    }
+  } catch (err) {
+    console.error('Duress-password check failed', err);
+    // Fall through to a normal unlock attempt — never let a broken check
+    // here be the reason a legitimate unlock doesn't happen.
+  }
+
   try {
     await vault.unlock(pw);
     await cacheSession(pw);
@@ -203,11 +246,24 @@ document.getElementById('form-unlock').addEventListener('submit', async (e) => {
   }
 });
 
+/**
+ * Clears everything OUTSIDE the vault's own persisted blob that
+ * represents "this browser session is unlocked" — the cached session key
+ * and the idle-lock timer. Shared by an explicit Lock, deleting the
+ * vault, and a duress-password wipe, since all three need the same
+ * cleanup: the vault itself (vault.lock() / vault.wipe()) only owns its
+ * own in-memory state and its one storage entry, never these
+ * session-cache artifacts.
+ */
+function clearSessionArtifacts() {
+  clearCachedSessionKeyBytes();
+  clearIdleTimer();
+}
+
 // --- lock ---
 document.getElementById('btn-lock').addEventListener('click', () => {
   vault.lock();
-  clearCachedSessionKeyBytes();
-  clearIdleTimer();
+  clearSessionArtifacts();
   showView('view-unlock');
 });
 
@@ -380,10 +436,10 @@ document.getElementById('form-import').addEventListener('submit', async (e) => {
 
   try {
     const exported = JSON.parse(await file.text());
-    const count = await vault.importEntries(exported, pw);
+    const result = await vault.importEntries(exported, pw);
     resetIdleTimer();
     renderEntryList();
-    showToast(`Imported ${count} ${count === 1 ? 'entry' : 'entries'}`);
+    showToast(summarizeImport(result));
     showView('view-vault');
   } catch (err) {
     if (err instanceof WrongPasswordError) {
@@ -412,6 +468,123 @@ function downloadJSON(filename, dataObj) {
 function todayStamp() {
   return new Date().toISOString().slice(0, 10); // YYYY-MM-DD
 }
+
+/** Turns { added, updated, skipped } from importEntries() into one readable line. */
+function summarizeImport({ added, updated, skipped }) {
+  const parts = [];
+  if (added) parts.push(`${added} added`);
+  if (updated) parts.push(`${updated} updated`);
+  if (skipped) parts.push(`${skipped} already up to date`);
+  return parts.length ? parts.join(', ') : 'Nothing new to import';
+}
+
+// --- security hub ---
+document.getElementById('btn-open-security').addEventListener('click', async () => {
+  const hasDuress = await vault.hasDuressPassword();
+  document.getElementById('duress-status').textContent = hasDuress
+    ? 'A duress password is currently set.'
+    : 'No duress password is set.';
+  document.getElementById('btn-setup-duress').style.display = hasDuress ? 'none' : 'inline-block';
+  document.getElementById('btn-remove-duress').style.display = hasDuress ? 'inline-block' : 'none';
+  showView('view-security');
+});
+
+document.getElementById('btn-cancel-security').addEventListener('click', () => showView('view-vault'));
+
+// --- delete vault ("burn") ---
+document.getElementById('btn-open-burn').addEventListener('click', () => {
+  document.getElementById('burn-password').value = '';
+  document.getElementById('burn-error').textContent = '';
+  showView('view-burn-confirm');
+});
+
+document.getElementById('btn-cancel-burn').addEventListener('click', () => showView('view-security'));
+
+document.getElementById('form-burn-confirm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const pw = document.getElementById('burn-password').value;
+  const errorEl = document.getElementById('burn-error');
+  try {
+    const correct = await vault.verifyMasterPassword(pw);
+    if (!correct) {
+      errorEl.textContent = 'Incorrect master password.';
+      return;
+    }
+    await vault.wipe();
+    clearSessionArtifacts();
+    document.getElementById('burn-password').value = '';
+    showView('view-create'); // same screen a brand new install shows
+  } catch (err) {
+    errorEl.textContent = 'Something went wrong. Please try again.';
+    console.error(err);
+  }
+});
+
+// --- set up duress password ---
+document.getElementById('btn-setup-duress').addEventListener('click', () => {
+  document.getElementById('duress-setup-master').value = '';
+  document.getElementById('duress-setup-password').value = '';
+  document.getElementById('duress-setup-confirm').value = '';
+  document.getElementById('duress-setup-error').textContent = '';
+  showView('view-duress-setup');
+});
+
+document.getElementById('btn-cancel-duress-setup').addEventListener('click', () => showView('view-security'));
+
+document.getElementById('form-duress-setup').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const masterPw = document.getElementById('duress-setup-master').value;
+  const duressPw = document.getElementById('duress-setup-password').value;
+  const confirmPw = document.getElementById('duress-setup-confirm').value;
+  const errorEl = document.getElementById('duress-setup-error');
+
+  if (duressPw !== confirmPw) {
+    errorEl.textContent = "Duress passwords don't match.";
+    return;
+  }
+  try {
+    await vault.setDuressPassword(masterPw, duressPw);
+    errorEl.textContent = '';
+    showToast('Duress password set');
+    showView('view-vault');
+    renderEntryList();
+  } catch (err) {
+    if (err instanceof WrongPasswordError) {
+      errorEl.textContent = 'Incorrect master password.';
+    } else {
+      errorEl.textContent = err.message || 'Something went wrong. Please try again.';
+    }
+  }
+});
+
+// --- remove duress password ---
+document.getElementById('btn-remove-duress').addEventListener('click', () => {
+  document.getElementById('duress-remove-master').value = '';
+  document.getElementById('duress-remove-error').textContent = '';
+  showView('view-duress-remove');
+});
+
+document.getElementById('btn-cancel-duress-remove').addEventListener('click', () => showView('view-security'));
+
+document.getElementById('form-duress-remove').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const pw = document.getElementById('duress-remove-master').value;
+  const errorEl = document.getElementById('duress-remove-error');
+  try {
+    await vault.removeDuressPassword(pw);
+    errorEl.textContent = '';
+    showToast('Duress password removed');
+    showView('view-vault');
+    renderEntryList();
+  } catch (err) {
+    if (err instanceof WrongPasswordError) {
+      errorEl.textContent = 'Incorrect master password.';
+    } else {
+      errorEl.textContent = 'Something went wrong. Please try again.';
+      console.error(err);
+    }
+  }
+});
 
 // --- service worker registration (offline support + installability) ---
 if ('serviceWorker' in navigator) {

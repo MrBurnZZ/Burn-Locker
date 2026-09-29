@@ -151,6 +151,23 @@ button.danger {
 }
 .link-btn:active { color: var(--primary-dark); }
 
+.security-section {
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #eee;
+}
+.security-section:last-of-type { border-bottom: none; }
+.security-section h2 {
+  font-size: 15px;
+  margin: 0 0 6px;
+}
+.security-section .link-btn,
+.security-section .danger {
+  display: inline-block;
+  margin-top: 8px;
+  margin-right: 10px;
+}
+
 .toast {
   position: fixed;
   bottom: 24px;

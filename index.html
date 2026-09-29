@@ -60,6 +60,7 @@
       <div class="transfer-row">
         <button type="button" id="btn-open-export" class="link-btn">Export…</button>
         <button type="button" id="btn-open-import" class="link-btn">Import…</button>
+        <button type="button" id="btn-open-security" class="link-btn">Security…</button>
       </div>
     </section>
 
@@ -87,9 +88,9 @@
     <section id="view-import" class="view">
       <h1>Import entries</h1>
       <p class="hint">
-        Adds the entries from an exported file into this vault. This doesn't
-        check for duplicates — importing the same file twice will add
-        everything twice.
+        Adds the entries from an exported file into this vault. Safe to run
+        more than once — matching entries (by title + username) are updated
+        in place instead of duplicated, and unchanged ones are left alone.
       </p>
       <form id="form-import">
         <label>Export file
@@ -102,6 +103,100 @@
         <div class="form-actions">
           <button type="button" id="btn-cancel-import">Cancel</button>
           <button type="submit" class="primary">Import</button>
+        </div>
+      </form>
+    </section>
+
+    <!-- Security hub: duress password + delete vault -->
+    <section id="view-security" class="view">
+      <h1>Security</h1>
+
+      <div class="security-section">
+        <h2>Duress password</h2>
+        <p class="hint">
+          A second password you can type at the unlock screen instead of
+          your real master password. It never unlocks anything — it
+          silently and permanently deletes this vault, and the app looks
+          exactly like it did before a vault ever existed here. For
+          situations where you might be pressured to unlock it for someone.
+        </p>
+        <p class="hint" id="duress-status"></p>
+        <button type="button" id="btn-setup-duress" class="link-btn">Set up duress password…</button>
+        <button type="button" id="btn-remove-duress" class="link-btn">Remove duress password…</button>
+      </div>
+
+      <div class="security-section">
+        <h2>Delete vault</h2>
+        <p class="hint">
+          Permanently deletes every saved login on this device. Only this
+          vault's data is removed — nothing else in this browser or app is
+          touched. This can't be undone.
+        </p>
+        <button type="button" id="btn-open-burn" class="danger">Delete vault…</button>
+      </div>
+
+      <div class="form-actions">
+        <button type="button" id="btn-cancel-security">Back</button>
+      </div>
+    </section>
+
+    <!-- Delete vault: requires re-entering the master password to confirm -->
+    <section id="view-burn-confirm" class="view">
+      <h1>Delete vault</h1>
+      <p class="hint">
+        This permanently deletes every saved login. It cannot be undone.
+        Enter your master password to confirm.
+      </p>
+      <form id="form-burn-confirm">
+        <label>Master password
+          <input type="password" id="burn-password" required autocomplete="current-password" />
+        </label>
+        <p class="error" id="burn-error"></p>
+        <div class="form-actions">
+          <button type="button" id="btn-cancel-burn">Cancel</button>
+          <button type="submit" class="danger">Permanently delete vault</button>
+        </div>
+      </form>
+    </section>
+
+    <!-- Set up a duress password -->
+    <section id="view-duress-setup" class="view">
+      <h1>Set up duress password</h1>
+      <p class="hint">
+        Choose a password that is NOT your master password. If it's ever
+        typed at the unlock screen, this vault is wiped instead of
+        unlocked.
+      </p>
+      <form id="form-duress-setup">
+        <label>Master password (to confirm it's really you)
+          <input type="password" id="duress-setup-master" required autocomplete="current-password" />
+        </label>
+        <label>New duress password
+          <input type="password" id="duress-setup-password" minlength="8" required autocomplete="off" />
+        </label>
+        <label>Confirm duress password
+          <input type="password" id="duress-setup-confirm" minlength="8" required autocomplete="off" />
+        </label>
+        <p class="error" id="duress-setup-error"></p>
+        <div class="form-actions">
+          <button type="button" id="btn-cancel-duress-setup">Cancel</button>
+          <button type="submit" class="primary">Save</button>
+        </div>
+      </form>
+    </section>
+
+    <!-- Remove the duress password -->
+    <section id="view-duress-remove" class="view">
+      <h1>Remove duress password</h1>
+      <p class="hint">Enter your master password to turn off the duress password.</p>
+      <form id="form-duress-remove">
+        <label>Master password
+          <input type="password" id="duress-remove-master" required autocomplete="current-password" />
+        </label>
+        <p class="error" id="duress-remove-error"></p>
+        <div class="form-actions">
+          <button type="button" id="btn-cancel-duress-remove">Cancel</button>
+          <button type="submit" class="primary">Remove</button>
         </div>
       </form>
     </section>
