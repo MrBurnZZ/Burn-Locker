@@ -209,6 +209,10 @@ export class Vault {
     const exportKey = await deriveKey(masterPassword, exportSalt, { iterations: exportIterations });
     const { iv, ciphertext } = await encryptJSON(exportKey, { entries: this.data.entries });
     return {
+      // This literal tag is a cross-platform compatibility token shared
+      // with the Windows app's export format, not user-facing text, so it
+      // deliberately keeps its pre-rebrand value rather than following the
+      // Simple Vault → Burn Locker rename.
       format: 'simple-vault-export',
       version: 1,
       salt: bytesToBase64(exportSalt),
@@ -236,7 +240,7 @@ export class Vault {
   async importEntries(exportedFile, password) {
     this._assertUnlocked();
     if (!exportedFile || exportedFile.format !== 'simple-vault-export') {
-      throw new Error('This file is not a Simple Vault export.');
+      throw new Error('This file is not a Burn Locker export.');
     }
 
     const salt = base64ToBytes(exportedFile.salt);

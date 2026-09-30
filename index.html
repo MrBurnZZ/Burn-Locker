@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
-  <title>Simple Vault</title>
+  <title>Burn Locker</title>
   <meta name="theme-color" content="#2f5fd6" />
   <link rel="manifest" href="manifest.json" />
   <link rel="icon" href="icons/icon-192.png" />
@@ -38,7 +38,7 @@
 
     <!-- Vault exists but is locked -->
     <section id="view-unlock" class="view">
-      <h1>Simple Vault</h1>
+      <h1>Burn Locker</h1>
       <form id="form-unlock">
         <label>Master password
           <input type="password" id="unlock-password" required autocomplete="current-password" autofocus />
@@ -113,12 +113,13 @@
 
       <div class="security-section">
         <h2>Appearance</h2>
-        <label class="switch-row">
-          <span>Dark mode</span>
-          <span class="switch">
-            <input type="checkbox" id="dark-mode-toggle" />
-            <span class="switch-track"></span>
-          </span>
+        <label class="select-row">
+          <span>Theme</span>
+          <select id="theme-select">
+            <option value="system">Match system</option>
+            <option value="light">Light</option>
+            <option value="dark">Dark</option>
+          </select>
         </label>
       </div>
 
@@ -144,6 +145,12 @@
           touched. This can't be undone.
         </p>
         <button type="button" id="btn-open-burn" class="danger">Delete vault…</button>
+      </div>
+
+      <div class="security-section">
+        <h2>Legal</h2>
+        <a class="link-btn" href="terms.html" target="_blank" rel="noopener">Terms of Service</a>
+        <a class="link-btn" href="privacy.html" target="_blank" rel="noopener">Privacy Policy</a>
       </div>
 
       <div class="form-actions">

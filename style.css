@@ -79,7 +79,7 @@ label {
   color: var(--text);
 }
 
-input, textarea {
+input, textarea, select {
   font-size: 16px; /* 16px+ avoids iOS/Android auto-zoom on focus */
   padding: 11px 12px;
   border: 1px solid var(--border);
@@ -87,6 +87,10 @@ input, textarea {
   font-family: inherit;
   background: var(--surface);
   color: var(--text);
+}
+
+select {
+  cursor: pointer;
 }
 
 textarea { resize: vertical; }
@@ -208,52 +212,26 @@ button.danger {
   margin-right: 10px;
 }
 
-/* Dark mode toggle — a checkbox visually styled as an on/off switch */
-.switch-row {
+/* A settings row: a label on the left, one control (currently just the
+   theme <select>) on the right. Was previously a checkbox styled as an
+   on/off switch for a plain light/dark toggle; replaced with a 3-way
+   System/Light/Dark select so "follow whatever the OS is set to" is a
+   choice you can always come back to, not just a one-time default — see
+   app.js's loadTheme/applyTheme and the Windows app's SettingsView, which
+   this now matches. */
+.select-row {
   display: flex;
   flex-direction: row; /* overrides the global `label { flex-direction: column }` above */
   align-items: center;
   justify-content: space-between;
-  cursor: pointer;
+  gap: 12px;
   font-size: 13px;
   color: var(--text);
   margin-top: 8px;
 }
-
-.switch {
-  position: relative;
-  display: inline-block;
-  width: 42px;
-  height: 24px;
+.select-row select {
   flex-shrink: 0;
 }
-.switch input {
-  position: absolute;
-  opacity: 0;
-  width: 0;
-  height: 0;
-}
-.switch-track {
-  position: absolute;
-  inset: 0;
-  background: var(--border);
-  border-radius: 24px;
-  transition: background 0.15s;
-}
-.switch-track::before {
-  content: "";
-  position: absolute;
-  height: 18px;
-  width: 18px;
-  left: 3px;
-  top: 3px;
-  background: white;
-  border-radius: 50%;
-  transition: transform 0.15s;
-}
-.switch input:checked + .switch-track { background: var(--primary); }
-.switch input:checked + .switch-track::before { transform: translateX(18px); }
-.switch input:focus-visible + .switch-track { outline: 2px solid var(--primary); outline-offset: 2px; }
 
 .toast {
   position: fixed;

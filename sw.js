@@ -8,7 +8,7 @@
 // IndexedDB, which is a completely separate storage system from the
 // Cache API used here.
 
-const CACHE_NAME = 'simple-vault-shell-v1';
+const CACHE_NAME = 'burn-locker-shell-v1';
 const APP_SHELL = [
   './',
   './index.html',

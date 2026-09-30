@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>Burn Locker - Privacy Policy</title>
+  <style>
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    /* The extra [class] is a hack that increases specificity enough to
+       override a similar rule in reveal.js */
+    ul.task-list[class]{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      font-size: inherit;
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+  </style>
+  <link rel="stylesheet" href="legal.css" />
+</head>
+<body>
+<header id="title-block-header">
+<h1 class="title">Burn Locker - Privacy Policy</h1>
+</header>
+<h1 id="privacy-policy-burn-locker">Privacy Policy — Burn Locker</h1>
+<p><strong>Effective date:</strong> September 29, 2026</p>
+<p>This Privacy Policy explains what data Burn Locker (the “Service”)
+handles, where it lives, and — just as importantly — what we never see.
+Burn Locker is built so that this policy can be short: there is no
+account, no server, and no sync, so there is very little to
+describe.</p>
+<h2 id="the-short-version">1. The short version</h2>
+<p>We do not collect your data. Burn Locker runs entirely on your own
+device (in your browser, as an extension, or as a mobile web app). Your
+master password, your saved logins, and anything else you enter is
+encrypted and decrypted locally, using your master password as the key.
+Nothing is transmitted to us, because there is no server for it to be
+transmitted to.</p>
+<h2 id="what-data-exists-and-where">2. What data exists, and where</h2>
+<ul>
+<li><strong>Your saved vault entries</strong> (titles, usernames,
+passwords, notes) are encrypted with a key derived from your master
+password and stored only in your browser’s local storage on your own
+device (<code>chrome.storage.local</code> for the extension, the
+browser’s local storage for the web app). We have no access to this
+storage, encrypted or otherwise.</li>
+<li><strong>Your master password</strong> is never stored in any form —
+not encrypted, not hashed to disk, nowhere. It is held in memory only
+while you’re actively using an unlocked vault, and is discarded when you
+lock the vault, close the browser, or after 15 minutes of
+inactivity.</li>
+<li><strong>A temporary session key</strong>, derived from your master
+password, is cached in memory (<code>chrome.storage.session</code> on
+the extension) so you’re not asked to unlock repeatedly during one
+browser session. This is cleared automatically when you lock the vault
+or close the browser — it never touches disk.</li>
+<li><strong>Your theme preference</strong> (light/dark mode) is stored
+separately from your vault, so it survives even if you delete your
+vault.</li>
+<li><strong>A list of hostnames you’ve told the “save this login?”
+banner never to show for</strong> (see Section 4) is stored locally,
+separately from your vault entries.</li>
+<li><strong>Exported files.</strong> If you use Export to move entries
+to another device, the resulting file is encrypted with your master
+password and saved wherever your browser saves downloads. We never see
+this file. You are responsible for where you store or send it — see the
+Terms of Service.</li>
+</ul>
+<p>None of the above is ever sent to us or to any third party. There is
+no account system, no analytics, and no tracking in Burn Locker.</p>
+<h2 id="the-runs-on-every-website-permission">3. The “runs on every
+website” permission</h2>
+<p>Starting with this version, the browser extension includes a
+component that runs on the pages you visit, so it can notice when you
+submit an ordinary login form and offer to save it. Your browser will
+show this as a broad-sounding permission (“read and change all your data
+on all websites you visit”) — this is standard for any browser extension
+that offers this feature (the same permission password managers like
+1Password or Bitwarden require), and here is exactly what it does and
+doesn’t do with it:</p>
+<ul>
+<li>It watches for ordinary form submissions containing a password
+field.</li>
+<li>When one happens, it reads only that form’s hostname, username, and
+password — nothing else on the page — and hands them to the extension’s
+own background process on your device.</li>
+<li>That data is used only to show you the “save this login?” banner
+and, if you say yes, to encrypt and store the entry in your local
+vault.</li>
+<li><strong>None of it is ever sent off your device.</strong> There is
+no server on the other end. It never leaves your browser.</li>
+<li>If your vault is locked when this happens, the captured login is
+held in memory only (never written to disk) until you next unlock the
+extension, at which point it’s offered to you there.</li>
+</ul>
+<h2 id="your-choices-and-controls">4. Your choices and controls</h2>
+<ul>
+<li>The “save this login?” banner can be turned off permanently for any
+individual site via “Never for this site,” at any time.</li>
+<li>You can delete your entire vault at any time via Settings → Delete
+vault. This is immediate, local, and permanent — see the Terms of
+Service for details.</li>
+<li>You can also configure a duress password (Settings → Duress
+password) that silently wipes the vault if it’s ever used at the unlock
+screen.</li>
+</ul>
+<h2 id="third-party-hosting-web-app-only">5. Third-party hosting (web
+app only)</h2>
+<p>The mobile web app is static — no server-side code of ours runs at
+all — but it has to be hosted somewhere to be reachable over HTTPS (for
+example, GitHub Pages). Whoever hosts it may log standard, ordinary web
+server access data (such as IP address and request timestamps) as part
+of normal web hosting, the same as any website you visit. This logging
+is outside our control and is governed by that host’s own privacy
+practices, not this policy. It has no connection to your vault data,
+which never leaves your device regardless of how the page itself was
+served to you.</p>
+<h2 id="childrens-privacy">6. Children’s privacy</h2>
+<p>Burn Locker is not directed at children and does not knowingly
+collect information from anyone — which, by design, includes children,
+since it doesn’t knowingly collect information from anyone at all.</p>
+<h2 id="changes-to-this-policy">7. Changes to this policy</h2>
+<p>If this policy changes, we’ll update the effective date above. Since
+the Service doesn’t collect contact information from you, we have no way
+to notify you directly — check back here if you want to know about
+changes.</p>
+<h2 id="contact">8. Contact</h2>
+<p>Questions about this policy can be sent to [Insert contact
+email].</p>
+</body>
+</html>

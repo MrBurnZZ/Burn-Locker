@@ -1,6 +1,6 @@
 {
-  "name": "Simple Vault",
-  "short_name": "Vault",
+  "name": "Burn Locker",
+  "short_name": "Burn Locker",
   "description": "A local, encrypted password vault.",
   "start_url": "./index.html",
   "scope": "./",

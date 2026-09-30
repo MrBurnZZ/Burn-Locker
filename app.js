@@ -114,12 +114,34 @@ let editingEntryId = null;
 // your saved logins should never also reset how the app looks.
 // localStorage is synchronous, so this can run immediately, before
 // anything else — there's no flash of the wrong theme while it loads.
-const THEME_STORAGE_KEY = 'simpleVaultTheme'; // 'light' | 'dark'
+//
+// Three-way preference — 'system' | 'light' | 'dark' — matching the Windows
+// app's ThemePreference enum and SettingsView exactly: 'system' means "read
+// whatever the OS/browser prefers right now and use that," checked once
+// whenever the theme is applied (on load, or when this setting changes),
+// not something that keeps following the OS live after that. Storing
+// 'system' as an explicit value (rather than just "nothing saved yet")
+// means it's a real choice you can come back to — pick Light, then later
+// decide you want to just match the OS again — not only a first-run
+// default that gets permanently overwritten the first time you touch the
+// setting.
+const THEME_STORAGE_KEY = 'simpleVaultTheme'; // 'system' | 'light' | 'dark'
 
-function applyTheme(theme) {
-  document.documentElement.setAttribute('data-theme', theme);
-  const toggle = document.getElementById('dark-mode-toggle');
-  if (toggle) toggle.checked = theme === 'dark';
+function systemPrefersDark() {
+  return window.matchMedia('(prefers-color-scheme: dark)').matches;
+}
+
+/** Resolves a stored preference ('system' | 'light' | 'dark') to the actual 'light' | 'dark' to render. */
+function resolveTheme(preference) {
+  if (preference === 'dark') return 'dark';
+  if (preference === 'light') return 'light';
+  return systemPrefersDark() ? 'dark' : 'light'; // 'system', or no preference saved yet
+}
+
+function applyTheme(preference) {
+  document.documentElement.setAttribute('data-theme', resolveTheme(preference));
+  const select = document.getElementById('theme-select');
+  if (select) select.value = preference;
 }
 
 function loadTheme() {
@@ -129,18 +151,15 @@ function loadTheme() {
   } catch {
     // Falls through to the system-preference default below.
   }
-  // No explicit choice saved yet? Default to whatever the OS/browser is
-  // already set to, rather than always starting in light mode.
-  const theme = stored || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
-  applyTheme(theme);
+  applyTheme(stored || 'system'); // no explicit choice saved yet defaults to following the OS
 }
 loadTheme(); // run immediately — before init() — so there's no flash of the wrong theme
 
-document.getElementById('dark-mode-toggle').addEventListener('change', (e) => {
-  const theme = e.target.checked ? 'dark' : 'light';
-  applyTheme(theme);
+document.getElementById('theme-select').addEventListener('change', (e) => {
+  const preference = e.target.value;
+  applyTheme(preference);
   try {
-    localStorage.setItem(THEME_STORAGE_KEY, theme);
+    localStorage.setItem(THEME_STORAGE_KEY, preference);
   } catch (err) {
     console.error('Could not save theme preference', err);
   }
@@ -449,7 +468,7 @@ document.getElementById('form-export').addEventListener('submit', async (e) => {
   const errorEl = document.getElementById('export-error');
   try {
     const exported = await vault.exportEntries(pw);
-    downloadJSON(`simple-vault-export-${todayStamp()}.json`, exported);
+    downloadJSON(`burn-locker-export-${todayStamp()}.json`, exported);
     resetIdleTimer();
     showToast('Export downloaded');
     showView('view-vault');
