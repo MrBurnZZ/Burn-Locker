@@ -192,6 +192,49 @@ function showToast(message) {
 }
 
 /**
+ * Reflects whether `input` is currently showing plaintext onto its toggle
+ * button's visual state, title, and aria-label.
+ */
+function setToggleState(button, input) {
+  const visible = input.type === 'text';
+  button.classList.toggle('showing', visible);
+  const label = visible ? 'Hide password' : 'Show password';
+  button.title = label;
+  button.setAttribute('aria-label', label);
+}
+
+/**
+ * Clears a password field back to empty AND masked, and keeps its
+ * show/hide toggle in sync with that. Used everywhere a form is reset
+ * before being shown (so a wipe or a fresh open never leaves last time's
+ * password sitting there) and right after a value has been used (so it
+ * isn't left in the DOM, visible or not, any longer than necessary).
+ */
+function resetPasswordField(id) {
+  const input = document.getElementById(id);
+  if (!input) return;
+  input.value = '';
+  input.type = 'password';
+  const btn = document.querySelector(`.toggle-visibility-btn[data-target="${id}"]`);
+  if (btn) setToggleState(btn, input);
+}
+
+// Every password field's show/hide toggle works the same way — this wires
+// all of them up in one place instead of repeating a click handler per
+// field. Covers both entry-password's toggle (inside .password-row) and
+// every master/export/import/duress password field (inside
+// .password-field); both use the same data-target attribute.
+document.querySelectorAll('.toggle-visibility-btn[data-target]').forEach((btn) => {
+  const input = document.getElementById(btn.dataset.target);
+  if (!input) return;
+  setToggleState(btn, input);
+  btn.addEventListener('click', () => {
+    input.type = input.type === 'password' ? 'text' : 'password';
+    setToggleState(btn, input);
+  });
+});
+
+/**
  * Clears the "create your vault" form. Needed before showing that screen
  * after a wipe (burn button or duress password) — this page's DOM stays
  * alive the whole time the tab is open, so without this, whatever was
@@ -200,8 +243,8 @@ function showToast(message) {
  * lands on.
  */
 function resetCreateForm() {
-  document.getElementById('create-password').value = '';
-  document.getElementById('create-password-confirm').value = '';
+  resetPasswordField('create-password');
+  resetPasswordField('create-password-confirm');
   document.getElementById('create-error').textContent = '';
 }
 
@@ -290,7 +333,7 @@ document.getElementById('form-unlock').addEventListener('submit', async (e) => {
     if (await vault.isDuressPassword(pw)) {
       await vault.wipe();
       clearSessionArtifacts();
-      document.getElementById('unlock-password').value = '';
+      resetPasswordField('unlock-password');
       errorEl.textContent = '';
       resetCreateForm();
       showView('view-create');
@@ -306,7 +349,7 @@ document.getElementById('form-unlock').addEventListener('submit', async (e) => {
     await vault.unlock(pw);
     await cacheSession(pw);
     errorEl.textContent = '';
-    document.getElementById('unlock-password').value = '';
+    resetPasswordField('unlock-password');
     renderEntryList();
     showView('view-vault');
   } catch (err) {
@@ -405,6 +448,8 @@ function openEntryForm(entry) {
   document.getElementById('entry-url').value = entry ? entry.url : '';
   document.getElementById('entry-notes').value = entry ? entry.notes : '';
   document.getElementById('entry-password').type = 'password';
+  const entryToggleBtn = document.querySelector('.toggle-visibility-btn[data-target="entry-password"]');
+  if (entryToggleBtn) setToggleState(entryToggleBtn, document.getElementById('entry-password'));
   document.getElementById('btn-delete-entry').style.display = entry ? 'inline-block' : 'none';
   showView('view-entry-form');
 }
@@ -414,16 +459,17 @@ document.getElementById('btn-cancel-entry').addEventListener('click', () => {
   showView('view-vault');
 });
 
-document.getElementById('btn-toggle-password').addEventListener('click', () => {
-  const input = document.getElementById('entry-password');
-  input.type = input.type === 'password' ? 'text' : 'password';
-});
+// entry-password's own toggle button is wired up generically, alongside
+// every other password field's, by the .toggle-visibility-btn[data-target]
+// loop near the top of this file.
 
 document.getElementById('btn-generate').addEventListener('click', () => {
   const pw = generatePassword({ length: 20 });
   const input = document.getElementById('entry-password');
   input.value = pw;
   input.type = 'text';
+  const toggleBtn = document.querySelector('.toggle-visibility-btn[data-target="entry-password"]');
+  if (toggleBtn) setToggleState(toggleBtn, input);
 });
 
 document.getElementById('form-entry').addEventListener('submit', async (e) => {
@@ -455,7 +501,7 @@ document.getElementById('btn-delete-entry').addEventListener('click', async () =
 
 // --- export ---
 document.getElementById('btn-open-export').addEventListener('click', () => {
-  document.getElementById('export-password').value = '';
+  resetPasswordField('export-password');
   document.getElementById('export-error').textContent = '';
   showView('view-export');
 });
@@ -485,7 +531,7 @@ document.getElementById('form-export').addEventListener('submit', async (e) => {
 // --- import ---
 document.getElementById('btn-open-import').addEventListener('click', () => {
   document.getElementById('import-file').value = '';
-  document.getElementById('import-password').value = '';
+  resetPasswordField('import-password');
   document.getElementById('import-error').textContent = '';
   showView('view-import');
 });
@@ -566,7 +612,7 @@ document.getElementById('btn-cancel-security').addEventListener('click', () => s
 
 // --- delete vault ("burn") ---
 document.getElementById('btn-open-burn').addEventListener('click', () => {
-  document.getElementById('burn-password').value = '';
+  resetPasswordField('burn-password');
   document.getElementById('burn-error').textContent = '';
   showView('view-burn-confirm');
 });
@@ -585,7 +631,7 @@ document.getElementById('form-burn-confirm').addEventListener('submit', async (e
     }
     await vault.wipe();
     clearSessionArtifacts();
-    document.getElementById('burn-password').value = '';
+    resetPasswordField('burn-password');
     resetCreateForm();
     showView('view-create'); // same screen a brand new install shows
   } catch (err) {
@@ -596,9 +642,9 @@ document.getElementById('form-burn-confirm').addEventListener('submit', async (e
 
 // --- set up duress password ---
 document.getElementById('btn-setup-duress').addEventListener('click', () => {
-  document.getElementById('duress-setup-master').value = '';
-  document.getElementById('duress-setup-password').value = '';
-  document.getElementById('duress-setup-confirm').value = '';
+  resetPasswordField('duress-setup-master');
+  resetPasswordField('duress-setup-password');
+  resetPasswordField('duress-setup-confirm');
   document.getElementById('duress-setup-error').textContent = '';
   showView('view-duress-setup');
 });
@@ -633,7 +679,7 @@ document.getElementById('form-duress-setup').addEventListener('submit', async (e
 
 // --- remove duress password ---
 document.getElementById('btn-remove-duress').addEventListener('click', () => {
-  document.getElementById('duress-remove-master').value = '';
+  resetPasswordField('duress-remove-master');
   document.getElementById('duress-remove-error').textContent = '';
   showView('view-duress-remove');
 });

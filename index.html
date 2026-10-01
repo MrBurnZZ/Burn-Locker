@@ -26,10 +26,16 @@
       </p>
       <form id="form-create">
         <label>Master password
-          <input type="password" id="create-password" minlength="8" required autocomplete="new-password" />
+          <div class="password-field">
+            <input type="password" id="create-password" minlength="8" required autocomplete="new-password" />
+            <button type="button" class="toggle-visibility-btn" data-target="create-password">👁</button>
+          </div>
         </label>
         <label>Confirm master password
-          <input type="password" id="create-password-confirm" minlength="8" required autocomplete="new-password" />
+          <div class="password-field">
+            <input type="password" id="create-password-confirm" minlength="8" required autocomplete="new-password" />
+            <button type="button" class="toggle-visibility-btn" data-target="create-password-confirm">👁</button>
+          </div>
         </label>
         <p class="error" id="create-error"></p>
         <button type="submit" class="primary full-width">Create vault</button>
@@ -41,7 +47,10 @@
       <h1>Burn Locker</h1>
       <form id="form-unlock">
         <label>Master password
-          <input type="password" id="unlock-password" required autocomplete="current-password" autofocus />
+          <div class="password-field">
+            <input type="password" id="unlock-password" required autocomplete="current-password" autofocus />
+            <button type="button" class="toggle-visibility-btn" data-target="unlock-password">👁</button>
+          </div>
         </label>
         <p class="error" id="unlock-error"></p>
         <button type="submit" class="primary full-width">Unlock</button>
@@ -74,7 +83,10 @@
       </p>
       <form id="form-export">
         <label>Master password
-          <input type="password" id="export-password" required autocomplete="current-password" />
+          <div class="password-field">
+            <input type="password" id="export-password" required autocomplete="current-password" />
+            <button type="button" class="toggle-visibility-btn" data-target="export-password">👁</button>
+          </div>
         </label>
         <p class="error" id="export-error"></p>
         <div class="form-actions">
@@ -97,7 +109,10 @@
           <input type="file" id="import-file" accept=".json,application/json" required />
         </label>
         <label>Password used to create that export
-          <input type="password" id="import-password" required autocomplete="off" />
+          <div class="password-field">
+            <input type="password" id="import-password" required autocomplete="off" />
+            <button type="button" class="toggle-visibility-btn" data-target="import-password">👁</button>
+          </div>
         </label>
         <p class="error" id="import-error"></p>
         <div class="form-actions">
@@ -167,7 +182,10 @@
       </p>
       <form id="form-burn-confirm">
         <label>Master password
-          <input type="password" id="burn-password" required autocomplete="current-password" />
+          <div class="password-field">
+            <input type="password" id="burn-password" required autocomplete="current-password" />
+            <button type="button" class="toggle-visibility-btn" data-target="burn-password">👁</button>
+          </div>
         </label>
         <p class="error" id="burn-error"></p>
         <div class="form-actions">
@@ -187,13 +205,22 @@
       </p>
       <form id="form-duress-setup">
         <label>Master password (to confirm it's really you)
-          <input type="password" id="duress-setup-master" required autocomplete="current-password" />
+          <div class="password-field">
+            <input type="password" id="duress-setup-master" required autocomplete="current-password" />
+            <button type="button" class="toggle-visibility-btn" data-target="duress-setup-master">👁</button>
+          </div>
         </label>
         <label>New duress password
-          <input type="password" id="duress-setup-password" minlength="8" required autocomplete="off" />
+          <div class="password-field">
+            <input type="password" id="duress-setup-password" minlength="8" required autocomplete="off" />
+            <button type="button" class="toggle-visibility-btn" data-target="duress-setup-password">👁</button>
+          </div>
         </label>
         <label>Confirm duress password
-          <input type="password" id="duress-setup-confirm" minlength="8" required autocomplete="off" />
+          <div class="password-field">
+            <input type="password" id="duress-setup-confirm" minlength="8" required autocomplete="off" />
+            <button type="button" class="toggle-visibility-btn" data-target="duress-setup-confirm">👁</button>
+          </div>
         </label>
         <p class="error" id="duress-setup-error"></p>
         <div class="form-actions">
@@ -209,7 +236,10 @@
       <p class="hint">Enter your master password to turn off the duress password.</p>
       <form id="form-duress-remove">
         <label>Master password
-          <input type="password" id="duress-remove-master" required autocomplete="current-password" />
+          <div class="password-field">
+            <input type="password" id="duress-remove-master" required autocomplete="current-password" />
+            <button type="button" class="toggle-visibility-btn" data-target="duress-remove-master">👁</button>
+          </div>
         </label>
         <p class="error" id="duress-remove-error"></p>
         <div class="form-actions">
@@ -233,7 +263,7 @@
         <label>Password
           <div class="password-row">
             <input type="password" id="entry-password" autocomplete="off" />
-            <button type="button" id="btn-toggle-password" title="Show/hide">👁</button>
+            <button type="button" id="btn-toggle-password" class="toggle-visibility-btn" data-target="entry-password">👁</button>
             <button type="button" id="btn-generate" title="Generate a strong password">Generate</button>
           </div>
         </label>
